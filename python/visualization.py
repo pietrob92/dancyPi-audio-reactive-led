@@ -303,8 +303,8 @@ if __name__ == '__main__':
         g_curve.setData(x=x_data, y=x_data*0)
         b_curve.setData(x=x_data, y=x_data*0)
         # Add curves to plot
-        led_plot.addItem(r_curve)
-        led_plot.addItem(g_curve)
+        #led_plot.addItem(r_curve)
+        #led_plot.addItem(g_curve)
         led_plot.addItem(b_curve)
         # Frequency range label
         freq_label = pg.LabelItem('')

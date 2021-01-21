@@ -4,6 +4,7 @@ from __future__ import division
 import platform
 import numpy as np
 import config
+import sys
 
 # ESP8266 uses WiFi communication
 if config.DEVICE == 'esp8266':
@@ -30,6 +31,13 @@ elif config.DEVICE == 'blinkstick':
     # Create a listener that turns the leds off when the program terminates
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
+elif config.DEVICE == 'ptc':
+    sys.path.append("/home/fede/workspace/PTC/build/amd64_PTC_debug")
+    import pycclient
+    conn = pycclient.PyCClient(addr="172.31.4.252:44")
+    conn.connect()
+
+    #Command('output',Args(Enum(GpioOut,'out'),Bool('value'))
 
 _gamma = np.load(config.GAMMA_TABLE_PATH)
 """Gamma lookup table used for nonlinear brightness correction"""
@@ -135,6 +143,27 @@ def _update_blinkstick():
     #send the data to the blinkstick
     stick.set_led_data(0, newstrip)
 
+counter = 0
+def _update_ptc():
+    global conn
+    global pixels
+    pixels = np.clip(pixels, 0, 255).astype(int)
+
+    if False:
+        intensity = np.sum(pixels,axis=0)
+        intensity = np.clip(intensity,0,512)
+        nintensity = np.rint(intensity / (255*2))
+    else:
+        intensity = np.clip(pixels[2,:],0,255)
+        nintensity = np.rint(intensity / (160))
+    print(nintensity)
+    global counter
+    #counter = counter + 1
+    #if counter % 2 == 0:
+    #    return
+    for i,p in enumerate(nintensity):
+        conn.cmd_output_num(i+32,int(p))
+    pass
 
 def update():
     """Updates the LED strip values"""
@@ -144,6 +173,8 @@ def update():
         _update_pi()
     elif config.DEVICE == 'blinkstick':
         _update_blinkstick()
+    elif config.DEVICE == 'ptc':
+        _update_ptc()
     else:
         raise ValueError('Invalid device selected')
 
